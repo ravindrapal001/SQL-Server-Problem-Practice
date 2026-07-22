@@ -185,4 +185,38 @@ INSERT INTO Shipments VALUES
 (4,1005,'2024-02-11','Pending');
 
 
+--Beginner Questions
+SELECT TOP 1 * FROM Customers;
+SELECT TOP 1 * FROM Employees;
+SELECT TOP 1 * FROM Departments;
+SELECT TOP 1 * FROM Products;
+SELECT TOP 1 * FROM Categories;
+SELECT TOP 1 * FROM Orders;
+SELECT TOP 1 * FROM OrderDetails;
+SELECT TOP 1 * FROM Suppliers;
+SELECT TOP 1 * FROM Shipments;
 
+--1.Display every customer along with their Order ID. Customers who have never placed an order should also appear.
+SELECT A.*,B.OrderID FROM Customers AS A
+LEFT JOIN Orders AS B
+ON A.CustomerID=B.CustomerID;
+
+--2.Display every order together with the customer name. Even if customer information  is missing, the order should still appear.
+SELECT A.*,B.CustomerName FROM Orders AS A
+LEFT JOIN Customers AS B
+ON A.CustomerID=B.CustomerID;
+
+--3.Display every product along with its category name. Even if a product does not belong to any  category, if should still appear in the result set.
+SELECT A.*,B.CategoryName FROM Products AS A
+LEFT JOIN Categories AS B
+ON A.CategoryID=B.CategoryID;
+
+--4.Display every employee along with the department in which they work. Employees who are not assigned to any department should also appear in the result.
+SELECT A.*,B.DepartmentName FROM Employees AS A
+LEFT JOIN Departments AS B
+ON A.DepartmentID=B.DepartmentID;
+
+--5.Display every order along with its shipment information. Orders that have not yet been shipped should also be displayed.
+SELECT A.*,B.ShipmentID ,B.ShipmentDate,B.DeliveryStatus FROM  Orders AS A
+LEFT JOIN Shipments AS B
+ON A.OrderID=B.OrderID;
