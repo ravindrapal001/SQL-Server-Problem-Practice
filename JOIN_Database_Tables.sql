@@ -220,3 +220,34 @@ ON A.DepartmentID=B.DepartmentID;
 SELECT A.*,B.ShipmentID ,B.ShipmentDate,B.DeliveryStatus FROM  Orders AS A
 LEFT JOIN Shipments AS B
 ON A.OrderID=B.OrderID;
+
+--6.Display every supplier along with the products they supply. Suppliers who do not supply any products should also appear in the result.
+SELECT A.SUpplierID,A.SupplierName,A.City,B.ProductID,B.ProductName,B.CategoryID,B.Price FROM Suppliers AS A
+LEFT JOIN Products AS B
+ON A.SUpplierID=B.SupplierID;
+
+--7.Display every product category along with the products that belong to each category. Categories that don not contain any products should also appear in the result.
+SELECT A.CategoryID,A.CategoryName,B.ProductID,B.ProductName,B.SupplierID,B.Price FROM Categories AS A
+LEFT JOIN Products AS B
+ON A.CategoryID=B.CategoryID
+ORDER BY A.CategoryID,B.ProductName;
+
+--8.Display every department along with the employees working in that department. Departments that do not have any employees should also appear in the result.
+SELECT A.DepartmentID,A.DepartmentName,A.Location,B.EmployeeID,B.EmployeeName,B.Salary,B.HireDate FROM Departments AS A
+LEFT JOIN Employees AS B
+ON A.DepartmentID=B.DepartmentID
+ORDER BY A.DepartmentID,B.EmployeeName;
+
+--9.Display every customer along with the total number of orders  placed by that customer. Customers who have never placed an order should alos appear in the result with an order count of zero.
+SELECT A.CustomerID,A.CustomerName,COUNT(B.OrderID) AS TotalOrders FROM Customers AS A
+LEFT JOIN  Orders AS B
+ON A.CustomerID=B.CustomerID
+GROUP BY A.CustomerID,A.CustomerName
+ORDER BY A.CustomerID;
+
+--10.Display every product along with the total quantity sold.Pruducts taht have never been sold should also appear in the result with a total quantity of zero.
+SELECT A.ProductID,A.ProductName,SUM(B.Quantity) AS Total_Quantity FROM Products AS A
+LEFT JOIN OrderDetails AS B
+ON A.ProductID=B.ProductID
+GROUP BY A.ProductID,A.ProductName
+ORDER BY A.ProductID;
