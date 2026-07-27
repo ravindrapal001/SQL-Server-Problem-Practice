@@ -196,6 +196,8 @@ SELECT TOP 1 * FROM OrderDetails;
 SELECT TOP 1 * FROM Suppliers;
 SELECT TOP 1 * FROM Shipments;
 
+--LEFT JOIN(Begineer Question 15)
+
 --1.Display every customer along with their Order ID. Customers who have never placed an order should also appear.
 SELECT A.*,B.OrderID FROM Customers AS A
 LEFT JOIN Orders AS B
@@ -251,3 +253,41 @@ LEFT JOIN OrderDetails AS B
 ON A.ProductID=B.ProductID
 GROUP BY A.ProductID,A.ProductName
 ORDER BY A.ProductID;
+
+--11.Display every employee along with the orders handled by them. Employees who have not handled any orders should also appear in the result.
+SELECT A.EmployeeID,A.EmployeeName,A.Salary,B.OrderID,B.CustomerID, b.OrderDate FROM Employees As A
+LEFT JOIN Orders AS B
+ON A.EmployeeID=B.EmployeeID
+ORDER BY A.EmployeeID,B.OrderDate;
+
+--12.Display every customer along with the shipment status of their orders. Customers who have never placed an order should alos appear in the result.
+WITH Customer_Order AS
+(SELECT A.CustomerID,A.CustomerName,A.City,B.OrderID,B.EmployeeID,B.OrderDate FROM Customers AS A
+LEFT JOIN Orders AS B
+ON A.CustomerID=B.CustomerID)
+SELECT * FROM Customer_Order AS C
+LEFT JOIN Shipments AS D
+ON C.OrderID=D.OrderID
+ORDER BY C.CustomerID,C.OrderDate;
+
+--13.Display every supplier along with the categories of the products they supply. Suppliers who do not supply and products should also appear in the result.
+WITH Supplier_Product AS (SELECT A.SUpplierID,A.SupplierName,A.City,B.ProductID,B.ProductName,B.CategoryID,B.Price FROM Suppliers AS A
+LEFT JOIN Products AS B
+ON A.SUpplierID=B.SupplierID)
+SELECT * FROM Supplier_Product AS C
+LEFT JOIN Categories AS D
+ON C.CategoryID=D.CategoryID
+ORDER BY C.SUpplierID,C.ProductName;
+
+--14.Display every order along with the employee who processed it. Orders that are not assigned to any employee should also appear in the result.
+SELECT A.OrderID,A.EmployeeID,B.EmployeeName,B.Salary,B.HireDate FROM Orders AS A
+LEFT JOIN Employees AS B
+ON A.EmployeeID=B.EmployeeID
+ORDER BY A.OrderID;
+
+--15.Display every department along with the total number of employees working in that department. Departments with no employees should also appear in the result.
+SELECT A.DepartmentID,A.DepartmentName,COUNT(B.EmployeeID) AS TotalEmployee FROM Departments AS A
+LEFT JOIN Employees AS B
+ON A.DepartmentID=B.DepartmentID
+GROUP BY A.DepartmentID,A.DepartmentName
+ORDER BY A.DepartmentID;
