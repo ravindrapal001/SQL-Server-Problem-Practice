@@ -185,7 +185,7 @@ INSERT INTO Shipments VALUES
 (4,1005,'2024-02-11','Pending');
 
 
---Beginner Questions
+
 SELECT TOP 1 * FROM Customers;
 SELECT TOP 1 * FROM Employees;
 SELECT TOP 1 * FROM Departments;
@@ -195,3 +195,45 @@ SELECT TOP 1 * FROM Orders;
 SELECT TOP 1 * FROM OrderDetails;
 SELECT TOP 1 * FROM Suppliers;
 SELECT TOP 1 * FROM Shipments;
+
+/*
+INNER JOIN: It returns only those rows where a matching value exists in both tables based on the specified join condition.
+            If a row from one table has no corresponding match in the other table, it is excluded from the final result.
+*/
+
+--Intermediate Questions
+--Q.1: Display every order along with the customer who placed it.
+SELECT A.OrderID,A.OrderDate,B.CustomerID,B.CustomerName,B.City FROM Orders AS A
+INNER JOIN Customers AS B
+ON A.CustomerID=B.CustomerID
+ORDER BY A.OrderID;
+
+--Q.2: Display every employee along with the department in which they work.
+SELECT A.EmployeeID,A.EmployeeName,A.HireDate,B.DepartmentID,B.DepartmentName,B.Location FROM Employees AS A
+INNER JOIN Departments AS B
+ON A.DepartmentID=B.DepartmentID
+ORDER BY A.EmployeeID;
+
+--3. Display every product along with its category and supplier.
+SELECT A.ProductID,A.ProductName,A.CategoryID, A.SupplierID FROM Products AS A
+INNER JOIN Categories AS B
+ON A.CategoryID=B.CategoryID
+INNER JOIN Suppliers AS C
+ON A.SupplierID=C.SUpplierID 
+ORDER BY A.ProductID;
+
+--4.Display every order along with the employee who processed it and the customer who placed it.
+SELECT A.OrderID,A.CustomerID,A.EmployeeID, A.OrderDate,B.EmployeeName,B.HireDate FROM Orders AS A
+INNER JOIN Employees AS B
+ON A.EmployeeID=B.EmployeeID 
+INNER JOIN Customers AS C
+ON A.CustomerID=C.CustomerID
+ORDER BY A.OrderID;
+
+--5.Display every order along with the ordered products and their quantities.
+SELECT A.OrderID,A.CustomerID,A.EmployeeID,A.OrderDate,B.OrderDetailID,B.Quantity FROM Orders AS A
+INNER JOIN OrderDetails AS B
+ON A.OrderID=B.OrderID 
+INNER JOIN Products AS C
+ON B.ProductID=C.ProductID
+ORDER BY A.OrderID;
