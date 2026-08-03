@@ -237,3 +237,46 @@ ON A.OrderID=B.OrderID
 INNER JOIN Products AS C
 ON B.ProductID=C.ProductID
 ORDER BY A.OrderID;
+
+--6.Display every customer along with the products they have purchased.
+SELECT A.CustomerID,A.CustomerName,D.ProductID,D.ProductName FROM Customers AS A
+INNER JOIN Orders AS B
+ON A.CustomerID=B.CustomerID
+INNER JOIN OrderDetails AS C
+ON B.OrderID=C.OrderID
+INNER JOIN Products AS D
+ON C.ProductID=D.ProductID
+ORDER BY A.CustomerID,A.CustomerName,D.ProductID,D.ProductName;
+
+--7.Display every supplier along with the products they supply and the category of each product.
+SELECT A.SUpplierID,A.SupplierName,B.ProductID,B.ProductName,C.CategoryID,C.CategoryName FROM Suppliers AS A
+INNER JOIN Products AS B
+ON A.SUpplierID=B.SupplierID
+INNER JOIN Categories AS C
+ON B.CategoryID=C.CategoryID
+ORDER BY A.SUpplierID,A.SupplierName,B.ProductID,C.CategoryID;
+
+--8.Display every employee together with the total number of orders they have processed.
+SELECT a.EmployeeID,a.EmployeeName, count(b.OrderID) AS TotalOrders FROM Employees AS A
+INNER JOIN Orders AS B
+ON A.EmployeeID=B.EmployeeID
+GROUP BY A.EmployeeID,A.EmployeeName
+ORDER BY TotalOrders DESC;
+
+--9. Display every category together with the total number of products availabe in that category.
+SELECT A.CategoryID,A.CategoryName,COUNT(B.ProductID) AS TotalProducts FROM Categories AS A
+INNER JOIN Products AS B
+ON A.CategoryID=B.CategoryID
+GROUP BY A.CategoryID,A.CategoryName
+ORDER BY TotalProducts DESC , A.CategoryName;
+
+--10. Display every customer together with the total amount they have spent on purchases.
+SELECT A.CustomerID,A.CustomerName,COUNT(C.ProductID) AS TotalProduct,SUM(C.Quantity*D.Price) AS TotalPurchaeAmount FROM Customers AS A
+INNER JOIN Orders AS B
+ON A.CustomerID=B.CustomerID
+INNER JOIN OrderDetails AS C
+ON B.OrderID=C.OrderID 
+INNER JOIN Products AS D
+ON C.ProductID=D.ProductID
+GROUP BY A.CustomerID ,A.CustomerName
+ORDER BY TotalProduct DESC, TotalPurchaeAmount DESC;
