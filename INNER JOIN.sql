@@ -280,3 +280,51 @@ INNER JOIN Products AS D
 ON C.ProductID=D.ProductID
 GROUP BY A.CustomerID ,A.CustomerName
 ORDER BY TotalProduct DESC, TotalPurchaeAmount DESC;
+
+--11. Display every order along with its shipment details.
+SELECT A.OrderID,A.OrderDate,B.ShipmentID, B.ShipmentDate,B.DeliveryStatus FROM Orders AS A
+INNER JOIN Shipments AS B
+ON A.OrderID=B.OrderID
+ORDER BY A.OrderID;
+
+--12. Display every customer together with the products they purchased and the category of each product.
+SELECT A.CustomerID,A.CustomerName,D.ProductID,D.ProductName,E.CategoryID,E.CategoryName FROM Customers AS A
+INNER JOIN Orders AS B
+ON A.CustomerID = B.CustomerID
+INNER JOIN OrderDetails AS C
+ON B.OrderID = C.OrderID
+INNER JOIN Products AS D
+ON C.ProductID = D.ProductID
+INNER JOIN Categories AS E
+ON D.CategoryID = E.CategoryID
+
+ORDER BY A.CustomerID , ProductID;
+
+--13. Display every employee together with their department and the total number of orders they have processsed.
+SELECT A.EmployeeID,A.EmployeeName,B.DepartmentName, COUNT(C.OrderID) AS TotalOrders FROM Employees AS A
+INNER JOIN Departments AS B
+ON A.DepartmentID = B.DepartmentID
+INNER JOIN Orders AS C
+ON A.EmployeeID = C.EmployeeID
+GROUP BY A.EmployeeID, A.EmployeeName, B.DepartmentName
+ORDER BY TotalOrders DESC, A.EmployeeName;
+
+--14. Display every order together with the customer, employee, and shipment information.
+SELECT A.OrderID,C.CustomerID,C.CustomerName,D.EmployeeID,D.EmployeeName,B.ShipmentID,B.DeliveryStatus FROM Orders AS A
+INNER JOIN Shipments AS B
+ON A.OrderID = B.OrderID
+INNER JOIN Customers AS C
+ON A.CustomerID = C.CustomerID
+INNER JOIN Employees AS D
+ON A.EmployeeID = D.EmployeeID
+ORDER BY A.OrderID;
+
+--15. Generate a comprehensive sales report showing the following information for every product sold.
+SELECT D.OrderID,C.SUpplierID,C.SupplierName,A.ProductID,A.ProductName,B.CategoryID,B.CategoryName FROM Products AS A
+INNER JOIN Categories AS B
+ON A.CategoryID= B.CategoryID
+INNER JOIN Suppliers AS C
+ON A.SupplierID = C.SUpplierID
+INNER JOIN OrderDetails AS D
+ON A.ProductID = D.ProductID
+ORDER BY D.OrderID;
