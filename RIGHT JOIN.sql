@@ -238,3 +238,41 @@ Syntax:
  RIGHT JOIN Orders AS B
  ON A.OrderID=B.OrderID
  ORDER BY B.OrderID,B.EmployeeID;
+
+ --6. Display all categories together with the total number of products in each category.
+ SELECT B.CategoryID,B.CategoryName, COUNT(A.ProductID) AS TotalProduct FROM Products AS A
+ RIGHT JOIN Categories AS B
+ ON A.CategoryID=B.CategoryID
+ GROUP BY B.CategoryID,B.CategoryName
+ ORDER BY TotalProduct DESC;
+
+ --7. Display all suppliers togther with the total number of products they supply.
+ SELECT B.SUpplierID,B.SupplierName,COUNT(A.ProductID) AS TotalProduct FROM Products AS A
+ RIGHT JOIN Suppliers AS B
+ ON A.SupplierID=B.SUpplierID
+ GROUP BY B.SUpplierID,B.SupplierName
+ ORDER BY TotalProduct DESC, B.SupplierName;
+
+ --8. Display all customers together with the total number of orders they have placed.
+ SELECT B.CustomerID,B.CustomerName,COUNT(A.OrderID) AS TotalOrders FROM Orders AS A
+ RIGHT JOIN Customers AS B
+ ON A.CustomerID=B.CustomerID
+ GROUP BY B.CustomerID,B.CustomerName
+ ORDER BY TotalOrders DESC, B.CustomerName;
+
+ --9. Display all employees together with their department and the total number of orders they have processed.
+ SELECT B.EmployeeID,B.EmployeeName,C.DepartmentID,C.DepartmentName,COUNT(A.OrderID) AS TotalOrders FROM Orders AS A
+ RIGHT JOIN Employees AS B
+ ON A.EmployeeID=B.EmployeeID
+ RIGHT JOIN Departments AS C
+ ON B.DepartmentID=C.DepartmentID
+ GROUP BY B.EmployeeID,B.EmployeeName,C.DepartmentID,C.DepartmentName
+ ORDER BY TotalOrders DESC,B.EmployeeName;
+
+ --10. Display all products together with their category and supplier details.
+ SELECT B.ProductID,B.ProductName,C.CategoryID,C.CategoryName,A.SUpplierID,A.SupplierName FROM Suppliers AS A
+ RIGHT JOIN Products AS B
+ ON A.SUpplierID = B.SupplierID
+ RIGHT JOIN Categories AS C
+ ON B.CategoryID=C.CategoryID
+ ORDER BY B.ProductID;
