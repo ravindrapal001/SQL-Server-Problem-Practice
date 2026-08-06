@@ -246,7 +246,7 @@ Syntax:
  GROUP BY B.CategoryID,B.CategoryName
  ORDER BY TotalProduct DESC;
 
- --7. Display all suppliers togther with the total number of products they supply.
+ --7. Display all suppliers together with the total number of products they supply.
  SELECT B.SUpplierID,B.SupplierName,COUNT(A.ProductID) AS TotalProduct FROM Products AS A
  RIGHT JOIN Suppliers AS B
  ON A.SupplierID=B.SUpplierID
@@ -276,3 +276,37 @@ Syntax:
  RIGHT JOIN Categories AS C
  ON B.CategoryID=C.CategoryID
  ORDER BY B.ProductID;
+
+ --11.Display all departments together with the total number of employees and the total number of orders processed by each department.
+ SELECT C.DepartmentID,C.DepartmentName,COUNT( DISTINCT B.EmployeeID) AS TotalEmp, COUNT(A.OrderID) AS TotalOrders FROM Orders AS A
+ RIGHT JOIN Employees AS B
+ ON A.EmployeeID=B.EmployeeID
+ RIGHT JOIN Departments AS C
+ ON B.DepartmentID=C.DepartmentID
+ GROUP BY C.DepartmentID,C.DepartmentName
+ ORDER BY TotalEmp,TotalOrders;
+
+ --12. Display all customers together with the total purchases amount and the total number of orders placed by each customer.
+ SELECT D.CustomerID,D.CustomerName,ISNULL(SUM(B.Quantity*C.Price),0) AS TotalAmount, COUNT(A.OrderID) AS TotalOrders FROM Orders AS A
+ RIGHT JOIN OrderDetails AS B
+ ON A.OrderID=B.OrderID
+ RIGHT JOIN Products AS C
+ ON B.ProductID=C.ProductID
+ RIGHT JOIN Customers AS D
+ ON A.CustomerID=D.CustomerID
+ GROUP BY D.CustomerID,D.CustomerName
+ ORDER BY TotalAmount DESC, TotalOrders;
+
+ --13.Display all suppliers together with the total inventory value of the products they supply.
+ SELECT B.SUpplierID,B.SupplierName,ISNULL(SUM(A.Price),0) AS TotalInventoryValue FROM Products AS A
+ RIGHT JOIN  Suppliers AS B
+ ON A.SupplierID=B.SUpplierID
+ GROUP BY B.SUpplierID,B.SupplierName
+ ORDER BY TotalInventoryValue, B.SupplierName;
+
+ --14.Display all product categories together with the total inventory value of products in each category.
+ SELECT B.CategoryID,B.CategoryName, ISNULL(SUM(A.Price),0) AS TotalInventoryValue FROM Products AS A
+ RIGHT JOIN Categories AS B
+ ON A.CategoryID=B.CategoryID
+ GROUP BY B.CategoryID,B.CategoryName
+ ORDER BY TotalInventoryValue,B.CategoryName;
