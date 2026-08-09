@@ -238,3 +238,46 @@ SELECT A.OrderID,A.OrderDate,B.ShipmentID,B.ShipmentDate FROM Orders AS A
 FULL OUTER JOIN Shipments AS B
 ON A.OrderID=B.OrderID
 ORDER BY A.OrderID,B.ShipmentID;
+
+--6. Display all categories together with the total number of products in each category, including categories without products and products that are not assigned to any category.
+SELECT A.CategoryName,COUNT(B.ProductID)FROM Categories AS A
+FULL OUTER JOIN Products AS B
+ON A.CategoryID=B.CategoryID
+GROUP BY A.CategoryName
+ORDER BY A.CategoryName;
+
+--7. Display all suppliers together with the total number of products they supply, including suppliers who currently do not supply any products and products that are not assigned to any supplier.
+SELECT ISNULL(A.SupplierName,'Unassigned Supplier') AS SupplierName,COUNT(B.ProductID) AS No_product FROM Suppliers AS A
+FULL OUTER JOIN Products AS B
+ON A.SUpplierID=B.SupplierID
+GROUP BY A.SupplierName
+ORDER BY A.SupplierName;
+
+--8. Display all customers together with the total number of orders they ahve placed, including customers who have never placed an order and orders that do not have a matching customer.
+SELECT ISNULL(A.CustomerName,'Unknown Customer') AS CustomerName
+,COUNT(B.OrderID) AS No_Orders FROM Customers AS A
+FULL OUTER JOIN Orders AS B
+ON A.CustomerID=B.CustomerID
+GROUP BY A.CustomerName
+ORDER BY A.CustomerName;
+
+--9. Display all employees together with their department and the total number of orders they have processed, including employees wihtout departments, departments with employees, and employees who have not processed any orders.
+SELECT ISNULL(A.EmployeeName,'No Employee') AS EmployeeName,
+ISNULL(B.DepartmentName, 'No Department') AS DepartmentName,
+COUNT(C.OrderID) AS TotalOrders FROM Employees AS A
+FULL OUTER JOIN Departments AS B
+ON A.DepartmentID=B.DepartmentID
+FULL OUTER JOIN Orders AS C
+ON A.EmployeeID=C.EmployeeID
+GROUP BY A.EmployeeName,B.DepartmentName
+ORDER BY B.DepartmentName,A.EmployeeName;
+
+--10. Display all products together with their category and supplier details, including products without categories, pruducts without suppliers, categories without products and suppliers without products.
+SELECT ISNULL(A.ProductName,'No Product') AS ProductName,
+ISNULL(B.CategoryName, 'No Category') AS CategoryName,
+ISNULL(C.SupplierName, 'No Supplier') AS SupplierName FROM Products AS A
+FULL OUTER JOIN Categories AS B
+ON A.CategoryID=B.CategoryID
+FULL OUTER JOIN Suppliers AS C
+ON A.SupplierID=C.SUpplierID
+order by A.ProductName,B.CategoryName,C.SupplierName;
