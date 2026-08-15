@@ -281,3 +281,94 @@ ON A.CategoryID=B.CategoryID
 FULL OUTER JOIN Suppliers AS C
 ON A.SupplierID=C.SUpplierID
 order by A.ProductName,B.CategoryName,C.SupplierName;
+
+--11. Generate a complete employee sales performance reprot showing every employee their department, the total number of orders they have processed, and the total sales amount.
+-- The report must also include employees without departments, departments without employees,and employees who have not processed any orders.
+SELECT ISNULL(A.EmployeeName,'No Employee') AS EmployeeName,
+ISNULL(B.DepartmentName,'No Department') AS DepartmentName,
+COUNT(DISTINCT C.OrderID) AS TotalCount, 
+ISNULL(SUM(D.Quantity*E.Price),0)  AS TotalSalesAmount FROM Employees AS A
+FULL OUTER JOIN Departments AS B
+ON A.DepartmentID=B.DepartmentID
+FULL OUTER JOIN Orders AS C
+ON A.EmployeeID=C.EmployeeID
+FULL OUTER JOIN OrderDetails AS D
+ON C.OrderID=D.OrderID
+FULL OUTER JOIN Products AS E
+ON D.ProductID=E.ProductID
+GROUP BY A.EmployeeName,B.DepartmentName
+ORDER BY B.DepartmentName,A.EmployeeName;
+
+--12.Generate a complete customer pruchase summary showing every customer, the total number of orders placed, the total purchase amount, and the average order value.
+--The report must also include customers who have never placed an order and orders that donot have a matching customer.
+SELECT ISNULL(A.CustomerName,'Unknown Customer') AS CustomerName,
+COUNT(DISTINCT B.OrderID) AS TotalOrders,
+ISNULL(SUM(D.Price*C.Quantity),0)  AS TotalPurchaseAmount,
+ISNULL(AVG(B.OrderID),0) AS AverageOrderValue FROM Customers AS A
+FULL OUTER JOIN Orders AS B
+ON A.CustomerID=B.CustomerID
+FULL OUTER JOIN OrderDetails AS C
+ON B.OrderID=C.OrderID
+FULL OUTER JOIN Products AS D
+ON C.ProductID=D.ProductID
+GROUP BY A.CustomerName
+ORDER BY A.CustomerName;
+
+--13. Generate a complete supplier inventory report showing every supplier., the total number of products supplied, the total inventory quantity, and the total inventory value.
+-- The report must also include suppliers who currently do not supply any prouducts and products that are not assigned to any suppliers.
+SELECT ISNULL(A.SupplierName,'Unassigned Supplier') AS SupplierName,
+COUNT(B.ProductID ) AS TotalProduct, 
+ISNULL(SUM(C.Quantity),0) AS TotalQuantity,
+ISNULL(SUM(B.Price*C.Quantity),0) AS TotalValue FROM Suppliers AS A
+FULL OUTER JOIN Products AS B
+ON A.SUpplierID = B.SupplierID
+FULL OUTER JOIN OrderDetails AS C
+ON B.ProductID=C.ProductID
+GROUP BY A.SupplierName
+ORDER BY A.SupplierName;
+
+--14. Generate a complete category sales report showing every product category, the total number of products. the total quantity sold, and the total sales amount.
+-- The report must also include categories that currently have no products and products that are not assigned to any category.
+SELECT ISNULL(A.CategoryName,'Unknown') AS CategoryName,COUNT(DISTINCT B.ProductID) AS TotalProducts,
+ISNULL(SUM(C.Quantity),0) AS TotalQuantity, 
+ISNULL(SUM(B.Price*C.Quantity),0) AS TotalAmount FROM Categories AS A
+FULL OUTER JOIN Products AS B
+ON A.CategoryID=B.CategoryID
+FULL OUTER JOIN OrderDetails AS C
+ON B.CategoryID=C.ProductID
+GROUP BY A.CategoryName 
+ORDER BY A.CategoryName;
+
+--15.Generate a comprehensive ERP business report using all major business tables. The report should display department information, employee details,
+-- customer details, order information, shipment status, product details, category information, supplier details, total quantity sold,
+-- and total sales amount. The report must include unmatched reocrds from every table, such as departments without employees, employees without orders,
+-- customers without orders, orders without customers, products without categories, prouducts without suppliers, suppliers wihtout products, and order without shipments.
+SELECT ISNULL(A.DepartmentName,'No Department') AS DepartmentName,
+ISNULL(B.EmployeeName,'No Employee') AS EmployeeName,
+ISNULL(D.CustomerName,'No Customer') AS CustomerName,
+ISNULL(G.ProductName,'No Product') AS ProductName,
+ISNULL(I.CategoryName,'No Category') AS CategoryName,
+ISNULL(H.SupplierName,'No Supplier') AS SupplierName,
+ISNULL(F.DeliveryStatus,'No Shipment') As ShipmentStatus,
+COUNT(DISTINCT C.OrderID) AS TotalOrders,
+ISNULL(SUM(E.Quantity),0) AS TotalQuantitySold,
+ISNULL(SUM(E.Quantity*G.Price),0) AS TotalSalesAmount
+FROM Departments AS A
+FULL OUTER JOIN Employees AS B
+ON A.DepartmentID = B.DepartmentID
+FULL OUTER JOIN Orders AS C
+ON B.EmployeeID=C.EmployeeID
+FULL OUTER JOIN Customers AS D
+ON C.CustomerID=D.CustomerID
+FULL OUTER JOIN OrderDetails AS E
+ON C.OrderID=E.OrderID
+FULL OUTER JOIN Shipments AS F
+ON E.OrderID=F.OrderID
+FULL OUTER JOIN Products AS G
+ON E.ProductID=G.ProductID
+FULL OUTER JOIN Suppliers AS H
+ON G.SupplierID=H.SUpplierID
+FULL OUTER JOIN Categories AS I
+ON G.CategoryID=I.CategoryID
+GROUP BY A.DepartmentName,B.EmployeeName,D.CustomerName, G.ProductName,I.CategoryName,H.SupplierName,F.DeliveryStatus
+ORDER BY A.DepartmentName,B.EmployeeName,D.CustomerName;
