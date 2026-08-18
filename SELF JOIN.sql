@@ -247,3 +247,49 @@ INNER JOIN Employees AS C
 ON A.ManagerID=C.EmployeeID
 WHERE A.EmployeeID < B.EmployeeID
 ORDER BY C.EmployeeName,A.EmployeeName,B.EmployeeName;
+
+--7.Display each manager along with the total salary of employees directly reporting to them. The report should also include managers who currently do not supervise any employees.
+SELECT A.EmployeeID AS ManagerID,A.EmployeeName AS ManagerName,
+ISNULL(SUM(B.Salary),0) AS TotalTeamSalary FROM Employees AS A
+LEFT JOIN Employees AS B
+ON A.ManagerID=B.EmployeeID
+GROUP BY A.EmployeeID,A.EmployeeName
+ORDER BY TotalTeamSalary, A.EmployeeName;
+
+--8. Display managers who supervise more than three employees. The report should include the manager's ID, manager's name, and the total number of direct employees reporting to them.
+SELECT A.EmployeeID AS ManagerID,
+A.EmployeeName AS ManagerName,
+Count(B.EmployeeID) AS TotalEmployee FROM Employees AS A
+INNER JOIN Employees AS B
+ON A.ManagerID=B.EmployeeID
+GROUP BY A.EmployeeID,A.EmployeeName
+HAVING COUNT(B.EmployeeID)>3
+ORDER BY TotalEmployee DESC, A.EmployeeName ;
+
+--9. Display each employee along with their manager's name and the department of both the employee and the manager. The report should include employee's who do not have a manager.
+SELECT A.EmployeeID, A.EmployeeName ,A.DepartmentID AS Emp_Dept, 
+ISNULL(B.EmployeeName,'No Manager') AS ManagerName,
+C.DepartmentName AS EmployeeDepartment,
+ISNULL(D.DepartmentName,'No Department') AS ManagerDepartment FROM Employees AS A
+LEFT JOIN Employees AS B
+ON A.EmployeeID=B.ManagerID
+LEFT JOIN Departments AS C
+ON A.DepartmentID=C.DepartmentID
+LEFT JOIN Departments AS D
+ON B.DepartmentID=D.DepartmentID
+ORDER BY C.DepartmentName,A.EmployeeName;
+
+--10. Display every employee together with their manager's salary, compare both salaries, calculate the salary difference, and determine whether the employee earns more than, less than, or equal to their manager.
+SELECT A.EmployeeID, A.EmployeeName, A.Salary AS EmployeeSalary ,
+ISNULL(B.EmployeeName, 'No Manager') As ManagerName,
+ISNULL(B.Salary,0) AS ManagerSalary,
+ISNULL(A.Salary - B.Salary,0) AS SalaryDifference,
+CASE
+    WHEN B.EmployeeID IS NULL THEN 'No Manager'
+    WHEN A.Salary> B.Salary THEN 'Higher Salary'
+    WHEN A.Salary < B.Salary THEN 'Lower Salary'
+    ELSE 'Equal Salary'
+END AS SalaryComparison    FROM Employees AS A
+LEFT JOIN Employees AS B
+ON A.ManagerID=B.EmployeeID
+ORDER BY A.EmployeeID;
