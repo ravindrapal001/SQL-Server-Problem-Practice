@@ -293,3 +293,145 @@ END AS SalaryComparison    FROM Employees AS A
 LEFT JOIN Employees AS B
 ON A.ManagerID=B.EmployeeID
 ORDER BY A.EmployeeID;
+
+--11. Generate an organizational hierarchy report showing every employee, their direct mananger, and their senior manager (manager's manager). The report should include the employee's ID, employee's name, direct manager's name, senior manager's name, and employee's department. Employees wihtout managers or senior managers should also be included.
+SELECT A.EmployeeID, A.EmployeeName, D.DepartmentName,
+ISNULL(B.EmployeeName,'No Manager') AS DirectManager,
+ISNULL(C.EmployeeName, 'No Senior Manager') AS SeniorManager FROM Employees AS A
+LEFT JOIN Employees AS B
+ON A.ManagerID=B.EmployeeID
+LEFT JOIN Employees AS C
+ON B.ManagerID=C.EmployeeID
+LEFT JOIN Departments AS D
+ON A.DepartmentID=D.DepartmentID
+ORDER BY
+D.DepartmentName, A.EmployeeName;
+
+--12. Generate an employee hierarchy report that displays every employee, their direct manager, the total number of direct employees reporting to that manager,and the average salary of the manager's team.
+SELECT A.EmployeeID,A.EmployeeName,
+ISNULL(B.EmployeeName, 'No Manager') AS ManagerName,
+ISNULL(C.TeamSize,0) as TeamSize,
+ISNULL(C.AverageSalary,0) AS AverageTeamSalary FROM Employees AS A
+LEFT JOIN Employees AS B
+ON A.ManagerID = B.EmployeeID
+LEFT JOIN (SELECT ManagerID, COUNT(*) AS TeamSize, AVG(Salary) AS AverageSalary FROM Employees
+WHERE ManagerID IS NOT NULL
+GROUP BY ManagerID) AS C
+ON A.EmployeeID=C.ManagerID
+ORDER BY ManagerName, A.EmployeeName;
+
+--13. Generate a complete organizational hierarchy report showing every employee together with:
+-- Employee ID, Employee Name, Department, Direct Manager, Senior Manager, Total Team Members under the Direct Mangaer,
+-- Total Salary of the Direct Manager's Team, Average Salary of the Direct Manager's Team, Employee Salary,
+-- Salary Difference from the Direct Manager, Salary Status ( Higher, Lower, Equal or No Manager), Employees without managers hould also appear in the report.
+SELECT A.EmployeeID,A.EmployeeName,D.DepartmentName,
+ISNULL(B.EmployeeName, 'No Manager') AS DirectManager,
+ISNULL(C.EmployeeName,'No Senior Manager') AS SeniorManager,
+ISNULL(E.TeamSize,0) AS TeamSize,
+ISNULL(E.TotalSalary,0) AS TeamSalary,
+ISNULL(E.AverageSalary,0) AS AverageTeamSalary,
+A.Salary AS EmployeeSalary,
+ISNULL(A.Salary-B.Salary,0) AS SalaryDifference,
+CASE
+     WHEN B.EmployeeID IS NULL THEN 'No Manager'
+     WHEN A.Salary > B.Salary THEN 'Higher Salary'
+     WHEN A.Salary < b.Salary THEN 'Lower Salary'
+     ELSE 'Equal Salary'
+     
+END AS SalaryStatus FROM Employees AS A
+LEFT JOIN Employees AS B
+ON A.ManagerID=B.EmployeeID 
+LEFT JOIN Employees AS C
+ON B.ManagerID=C.EmployeeID
+LEFT JOIN Departments AS D
+ON A.DepartmentID=D.DepartmentID
+LEFT JOIN ( SELECT ManagerID, COUNT(*) AS TeamSize,
+SUM(Salary) AS TotalSalary,AVG(Salary) AS AverageSalary FROM Employees
+WHERE ManagerID IS NOT NULL
+GROUP BY ManagerID) AS E 
+ON B.EmployeeID=E.ManagerID
+ORDER BY D.DepartmentName, A.EmployeeName;
+
+--14. Generate an organizational reproting analysis that identifies every manager along with:
+-- Manager ID, Manager Namae, Department Name, Total Direct Employees, Total Team Salary, Average Team Salary,
+-- Highest Team Salary, Lowest Team Salary, Number of Employees Earning More Than their Manager,
+-- Number of Employees Earning Less Than Their Manager, Number of Employees Having the Same Salary as Their Manager,
+-- Only employees who supervise at least one employee should appear in the report.
+SELECT A.EmployeeID AS ManagerID, A.EmployeeName AS ManagerName, C.DepartmentName,
+COUNT(B.EmployeeID) AS TeamSize,
+SUM(B.Salary) AS TotalTeamSalary,
+AVG(B.Salary) AS AverageTeamSalary,
+MAX(B.Salary) AS HighestTeamSalary,
+MIN(B.Salary) as LowestTeamSalary,
+SUM(CASE
+         WHEN B.Salary > A.Salary THEN 1 ELSE 0 
+    END) AS HigherSalaryEmployees,
+SUM(CASE
+         WHEN B.Salary < A.Salary THEN 1 ELSE 0 
+    END) AS LowerSalaryEmployees,
+SUM(CASE
+         WHEN B.Salary=A.Salary THEN 1 ELSE 0
+    END) AS EqualSalaryEmployees    
+FROM Employees AS A
+INNER JOIN Employees AS B
+ON A.ManagerID=B.EmployeeID
+LEFT JOIN Departments AS C
+ON A.DepartmentID=C.DepartmentID
+GROUP BY A.EmployeeID,A.EmployeeName,C.DepartmentName,A.Salary
+HAVING COUNT(B.EmployeeID)>0
+ORDER BY TeamSize DESC, ManagerName;
+
+--15. Generate a comprehensive Enterprise HR Analytics Dashboard using the following tables:
+-- Departments, Employees, Customers, Orders, Orderdetails, Products, Categories, Suppliers, Shipments.
+-- This report should display one record for each manager and include:
+-- Manager ID, Manager Name, Department Name, Senior Manager name, Team Size, Total Team Salary, Highest Team Salary,
+-- Lowest Team Salary, Number of Customers Hnadled by the Team, Number of Orders Processed, Total Sales Amount,
+-- Average Order Value, Number of Products Sold, Number of Categories Sold, Number of Suppliers Involved, Number of Shipments Delivered,Salary Comparison Status.
+SELECT A.EmployeeID,A.EmployeeName AS ManagerName, D.DepartmentName,
+ISNULL(C.EmployeeName, 'No Senior Manager') AS SeniorManager,
+COUNT(DISTINCT B.EmployeeID) AS TeamSize,
+ISNULL(AVG(B.Salary),0) AS TotalTeamSalary,
+ISNULL(MAX(B.Salary),0) AS HighestSalary,
+ISNULL(MIN(B.Salary),0) AS LowestSalary,
+COUNT(DISTINCT F.CustomerID) AS CustomersHandled,
+COUNT(DISTINCT E.OrderID) AS OrdersProcessed,
+SUM(G.Quantity*H.Price) AS TotalSales,
+AVG(G.Quantity*H.Price) AS AverageOrderValue,
+COUNT(DISTINCT H.ProductID) AS ProductsSold,
+COUNT(DISTINCT I.CategoryID) AS CategoriesSold,
+COUNT(DISTINCT J.SUpplierID) AS SuppliersInvolved,
+COUNT(DISTINCT K.ShipmentID) AS ShipmentsDelivered,
+
+CASE
+    WHEN AVG(B.Salary)>A.Salary THEN 'Team Avg Salary Higher'
+    WHEN AVG(B.Salary)<A.Salary THEN 'Team Avg Salary Lower'
+    ELSE 'Equal'
+END AS SalaryComparison
+
+
+
+FROM Employees AS A
+LEFT JOIN Employees AS B
+ON B.ManagerID=A.EmployeeID
+LEFT JOIN Employees AS C
+ON A.ManagerID=C.EmployeeID
+LEFT JOIN Departments AS D
+ON A.DepartmentID=D.DepartmentID
+LEFT JOIN Orders AS E
+ON E.EmployeeID=A.EmployeeID
+LEFT JOIN Customers AS F
+ON E.CustomerID=F.CustomerID
+LEFT JOIN OrderDetails AS G
+ON E.OrderID=G.OrderID
+LEFT JOIN Products AS H
+ON G.ProductID=H.ProductID
+LEFT JOIN Categories AS I
+ON H.CategoryID=I.CategoryID
+LEFT JOIN Suppliers AS J
+ON H.SupplierID=J.SUpplierID
+LEFT JOIN Shipments AS K
+ON K.OrderID=E.OrderID
+
+GROUP BY A.EmployeeID,A.EmployeeName,A.Salary,C.EmployeeName,D.DepartmentName
+HAVING COUNT(DISTINCT E.EmployeeID)>0
+ORDER BY TotalSales DESC, TeamSize DESC, ManagerName;
