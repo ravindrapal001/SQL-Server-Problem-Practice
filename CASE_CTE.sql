@@ -521,4 +521,108 @@ RANK() OVER ( ORDER BY TotalPurchase DESC ) AS CustomerRank
 FROM CustomerSales AS D
 ORDER BY CustomerRank;
 
+--6. The Warehouse Manager wants to identify inventory risk for each product.
+-- Generate a report displaying: ProductID, QuantityAvailable, ReordeLevel, InventoryRisk.
+-- Business Rule:
+-- If QuantityAvailable < ReorderLevel
+--      -Difference<=5 then Medium Risk
+--      -Difference>5 then High Risk
+-- If QuantityAvailable = ReorderLevel
+--      -At Reorder Level
+-- Otherwise - Low Risk
+-- Use a Nested CASE statement.
 
+SELECT A.ProductID,A.QuantityAvailable,A.ReorderLevel,
+CASE
+    WHEN A.QuantityAvailable<A.ReorderLevel THEN CASE WHEN (A.ReorderLevel-A.QuantityAvailable)<=5 THEN 'Medium Risk' ELSE 'High Risk' END
+    WHEN A.QuantityAvailable=A.ReorderLevel THEN 'At Reorder Level'
+    ELSE 'Low Risk'
+END AS InventoryRisk
+FROM Inventory AS A
+ORDER BY A.ProductID;
+
+--7. The Sales Director wants to identify the highest-spending customer in each month.
+-- Generate a report displaying: SalesYear, SalesMonth, CustomerID, CustomerName, MonthlySales, SalesRank.
+-- Use a Common Table Expression (CTE) and the RANK() window function.
+WITH MonthlyCustomerSales AS
+(
+SELECT YEAR(B.OrderDate) AS SalesYear, MONTH(B.OrderDate) AS SalesMonth,A.CustomerID,A.CustomerName,SUM(C.Quantity*C.UnitPrice)
+ AS MonthlySales FROM Customers AS A
+INNER JOIN Orders AS B
+ON A.CustomerID=B.CustomerID
+INNER JOIN OrderDetails AS C
+ON B.OrderID=C.OrderID
+GROUP BY YEAR(B.OrderDate),MONTH(B.OrderDate),A.CustomerID,A.CustomerName
+)
+SELECT D.SalesYear,D.SalesMonth,D.CustomerID,D.CustomerName,D.MonthlySales,
+RANK() OVER (PARTITION BY SalesYear, SalesMonth ORDER BY MonthlySales DESC) AS SalesRank
+FROM MonthlyCustomerSales AS D
+ORDER BY D.SalesYear,D.SalesMonth,SalesRank;
+
+--8.The Human Resource department wants to calculate annual bonuses based on employees' monthly salaries.
+-- Generate a report displaying: EmployeeID, EmployeeName, Salary, BonousPercentage, BonousAmount.
+-- Business Rules: 
+-- Salary<45000 then 5% Bonous
+-- Salary between 45000 and 60000 then 10% Bonous
+-- Salary >60000 then 15% Bonous
+SELECT A.EmployeeID,A.FirstName+''+A.LastName AS EmployeeName,A.Salary,
+CASE 
+    WHEN A.Salary<45000 THEN '5%'
+    WHEN A.Salary BETWEEN 45000 AND 60000 THEN '10%'
+    WHEN A.Salary > 60000 THEN '15%'
+END AS BonousPercentage,
+CASE 
+    WHEN A.Salary<45000 THEN 0.05*A.Salary
+    WHEN A.Salary BETWEEN 45000 AND 60000 THEN 0.1*A.Salary
+    WHEN A.Salary >60000 THEN 0.15*A.Salary
+END AS BonousAmount
+FROM Employees AS A
+ORDER BY A.Salary DESC;
+
+--9. The Finance department wants to monitor monthly sales performance.
+-- Generate a reprot displaying: SalesYear, SalesMonth, TotalSales, SalesTrend.
+-- Business Rules: Sales<20000 then Low
+-- Sales between 20000 and 100000 then Moderate
+-- Sales > 100000 then High. Use multiple CTEs.
+WITH OrderDate AS
+(
+SELECT YEAR(A.OrderDate) AS SalesYear, MONTH(A.OrderDate) AS SalesMonth,A.OrderID FROM Orders AS A
+),
+OrderSales AS
+(
+SELECT SUM(B.Quantity*B.UnitPrice) AS TotalSales,B.OrderID
+FROM OrderDetails AS B
+GROUP BY B.OrderID
+)
+SELECT C.SalesYear,C.SalesMonth,D.TotalSales,
+CASE
+    WHEN D.TotalSales<20000 THEN 'Low'
+    WHEN D.TotalSales BETWEEN 20000 AND 100000 THEN 'Moderate'
+    WHEN D.TotalSales >100000 THEN 'High'
+END AS SalesTrend
+FROM OrderDate AS C
+INNER JOIN OrderSales AS D
+ON C.OrderID=D.OrderID;
+
+
+--10. Management wants to classify products based on the total revenue generated.
+-- Display: ProductID, ProductName, Revenue, RevenueCategory.
+-- Business Rules: 
+-- Revenue<10000 ten Low Revenue
+-- Revenue between 10000 and 50000 then Medium Revenue
+-- Revenue >50000 then High Revenue
+WITH ProductRevenue AS
+(
+SELECT A.ProductID,A.ProductName,SUM(B.Quantity*B.UnitPrice) AS Revenue FROM Products AS A
+INNER JOIN OrderDetails AS B
+ON A.ProductID=B.ProductID
+GROUP BY A.ProductID,A.ProductName
+)
+SELECT C.ProductID,C.ProductName,C.Revenue,
+CASE 
+    WHEN C.Revenue<10000 THEN 'Low Revenue'
+    WHEN C.Revenue BETWEEN 10000 AND 50000 THEN 'Medium Revenue'
+    WHEN C.Revenue >50000 THEN 'High Revenue'
+END AS RevenueCategory
+FROM ProductRevenue AS C
+ORDER BY C.Revenue;
