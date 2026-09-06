@@ -626,3 +626,142 @@ CASE
 END AS RevenueCategory
 FROM ProductRevenue AS C
 ORDER BY C.Revenue;
+
+--11. The Finance Director wants to analyze the revenue gererated by each department based on the employees who processed customer orders.
+-- Generate a report showing: Department ID, Department Name, Total Orders, Department Revenue, Revenue Category.
+-- Revenue Classification: 
+-- Revenue < 20000 then Low Revenue
+-- Revenue between 20000 and 100000 then Medium Revenue
+-- Revenue > 100000 then High Revenue
+-- Use multiple Common Table Expressions.
+WITH OrderRevenue AS
+(
+SELECT A.EmployeeID,SUM(B.Quantity*B.UnitPrice) AS Revenue,
+COUNT(DISTINCT A.OrderID) AS TotalOrders FROM Orders AS A
+INNER JOIN OrderDetails AS B
+ON A.OrderID=B.OrderID
+GROUP BY A.EmployeeID
+), DepartmentRevenue AS
+(
+SELECT C.DepartmentID,C.DepartmentName,SUM(E.TotalOrders) AS TotalOrders,
+SUM(E.Revenue) AS DepartmentRevenue
+FROM Departments AS C
+INNER JOIN Employees AS D
+ON C.DepartmentID=D.DepartmentID
+INNER JOIN OrderRevenue AS E
+ON D.EmployeeID=E.EmployeeID
+GROUP BY C.DepartmentID,C.DepartmentName
+)
+SELECT F.DepartmentID,F.DepartmentName,F.TotalOrders,F.DepartmentRevenue,
+CASE
+     WHEN F.DepartmentRevenue<20000 THEN 'Low Revenue'
+     WHEN F.DepartmentRevenue BETWEEN 20000 AND 100000 THEN 'Medium Revenue'
+     WHEN F.DepartmentRevenue>100000 THEN 'High Revenue'
+END AS RevenueCategory
+FROM DepartmentRevenue AS F
+ORDER BY F.DepartmentRevenue DESC;
+
+--12.Management wants to identify the highest performing employees based on the total sales they generated.
+-- Generate a report showing: EmployeeID, EmployeeName, DepartmentName, TotalSales, SalesRank.
+-- Use a Common Table Expression and the DENSE_RANK() Window function.
+WITH EmployeeSales AS
+(
+SELECT A.EmployeeID,A.FirstName+''+LastName AS EmployeeName,
+B.DepartmentName , SUM(D.Quantity*D.UnitPrice) AS TotalSales
+FROM Employees AS A
+INNER JOIN Departments AS B
+ON A.DepartmentID=B.DepartmentID
+INNER JOIN Orders AS C
+ON C.EmployeeID=C.EmployeeID
+INNER JOIN OrderDetails AS D
+ON C.OrderID=D.OrderID
+GROUP BY A.EmployeeID,A.FirstName,A.LastName,B.DepartmentName
+)
+SELECT F.EmployeeID,F.EmployeeName,F.DepartmentName,F.TotalSales,
+DENSE_RANK() OVER(ORDER BY TotalSales DESC) AS SalesRank
+FROM EmployeeSales AS F;
+
+--13. The Marketing department wants to segment customers based on their lifetime purchase value.
+-- Generate a report displaying: CustomerID, CustomerName, TotalOrders, Lifetime Value, CustomerSegment
+-- Customer Segmentation Rules:
+-- Lifetime Value <20000 then Bronze
+-- Lifetime Value between 20000 and 50000 then silver
+-- Lifetime value>50000 then Gold. Use a Common Table Expression (CTE).
+WITH CustPur AS
+(
+SELECT A.CustomerID,A.CustomerName,COUNT(B.OrderID) AS TotalOrders,SUM(C.Quantity*C.UnitPrice) AS LifetimeValue FROM Customers AS A
+INNER JOIN Orders AS B
+ON A.CustomerID=B.CustomerID
+INNER JOIN OrderDetails AS C
+ON B.OrderID=C.OrderID
+GROUP BY A.CustomerID,A.CustomerName
+)
+SELECT D.CustomerID,D.CustomerName,D.TotalOrders,D.LifetimeValue,
+CASE
+    WHEN D.LifetimeValue<20000 THEN 'Bronze'
+    WHEN D.LifetimeValue BETWEEN 20000 AND 50000 THEN 'Silver'
+    WHEN D.LifetimeValue >50000 THEN 'Gold'
+END AS CustomerSegment
+FROM CustPur AS D
+ORDER BY D.LifetimeValue;
+
+--14. Management wants to analyze product category performance based on total revenue.
+-- Generate a report displaying: CategoryID, CategoryName, TotalRevenue, ProfitabilityCategory.
+-- Business Rules:
+-- Revenue<20000 then Low Profit
+-- Revenue between 20000 and 100000 then Medium Profit
+-- Revenue>100000 then High Profit. Use multiple  Common Table Expression.
+WITH CatPro AS
+(
+SELECT A.CategoryID,A.CategoryName,B.ProductID FROM Categories AS A
+INNER JOIN Products AS B
+ON A.CategoryID=B.CategoryID
+),
+CatRev AS
+(
+SELECT C.CategoryID,C.CategoryName,SUM(D.Quantity*D.UnitPrice) AS TotalRevenue FROM CatPro AS C
+INNER JOIN OrderDetails AS D
+ON C.ProductID=D.ProductID
+GROUP BY C.CategoryID,C.CategoryName
+)
+SELECT E.CategoryID,E.CategoryName,E.TotalRevenue,
+CASE 
+    WHEN E.TotalRevenue<20000 THEN 'Low Profit'
+    WHEN E.TotalRevenue BETWEEN 20000 AND 100000 THEN 'Medium Profit'
+    WHEN E.TotalRevenue >100000 THEN 'High Profit'
+END AS ProfitabilityCategory
+FROM CatRev AS E
+
+--15.The CEO wants a dashboard summarizing employee sales performance.
+-- Generate a report displaying: EmployeeID, EmployeeName, DepartmentName, TotalOrders, TotalSales, SalesRank, PerformanceCategory
+-- Performance Rules:
+-- Rank=1 then Top Performance
+-- Rank=2 or 3 then High Performance
+-- Otherwise then standard Performance. Use multiple Common Table Expression and a window function.
+;WITH EmpDep AS
+(
+SELECT A.EmployeeID,A.FirstName+''+A.LastName AS EmployeeName,B.DepartmentName,SUM(OD.Quantity*OD.UnitPrice) AS TotalSales FROM Employees AS A
+INNER JOIN Departments AS B
+ON A.DepartmentID=B.DepartmentID
+INNER JOIN Orders AS O
+ON A.EmployeeID=O.EmployeeID
+INNER JOIN OrderDetails AS OD
+ON O.OrderID=OD.OrderID
+GROUP BY A.EmployeeID,A.FirstName,A.LastName,B.DepartmentName
+), 
+EmpSales AS
+(
+SELECT C.EmployeeID,C.EmployeeName,C.DepartmentName,COUNT(D.OrderID) AS TotalOrders,
+DENSE_RANK() OVER (ORDER BY TotalSales DESC) AS SalesRank FROM EmpDep AS C
+INNER JOIN Orders AS D
+ON C.EmployeeID=D.EmployeeID
+GROUP BY C.EmployeeID,C.EmployeeName,C.DepartmentName
+)
+SELECT *,
+CASE 
+     WHEN F.SalesRank=1 THEN 'Top Performer'
+     WHEN F.SalesRank=2 OR F.SalesRank=3 THEN 'High Performer'
+     ELSE 'Standard Performer'
+END AS PerformanceCategory
+FROM EmpSales AS F;
+
