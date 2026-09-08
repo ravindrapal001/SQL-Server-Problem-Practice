@@ -765,3 +765,120 @@ CASE
 END AS PerformanceCategory
 FROM EmpSales AS F;
 
+--Advanced Practice Questions
+--1. Management wants to classify employees into salary bands within each department and generate a cumulative salary distribution report.
+-- Generate a report displaying: DepartmentName, EmployeeName, Salary, SalaryBand, SequenceNumber.
+-- Salary Bands: Salary<45000 then Band A
+-- Salary between 45000 and 60000 then Band B
+-- Salary>60000 then Band C
+-- Use a Common Table Expression with the ROW_NUMBER() window function.
+WITH DeptInfo AS
+(
+SELECT A.DepartmentName,B.FirstName+''+B.LastName AS EmployeeName,SUM(D.Quantity*D.UnitPrice) AS Salary
+FROM Departments AS A
+INNER JOIN Employees AS B
+ON A.DepartmentID=B.DepartmentID
+INNER JOIN Orders AS C
+ON B.EmployeeID=C.EmployeeID
+INNER JOIN OrderDetails AS D
+ON C.OrderID=D.OrderID
+GROUP BY A.DepartmentName,B.FirstName,B.LastName
+), 
+DeptDet AS
+(
+SELECT E.DepartmentName,E.EmployeeName,E.Salary,
+ROW_NUMBER() OVER( ORDER BY E.Salary) AS SequenceNumbers,
+CASE
+     WHEN E.Salary<45000 THEN 'Band A'
+     WHEN E.Salary BETWEEN 45000 AND 60000 THEN 'Band B'
+     WHEN E.Salary>60000 THEN 'Band C'
+END AS SalaryBand
+FROM DeptInfo AS E
+)
+SELECT F.DepartmentName,F.EmployeeName,F.Salary,F.SalaryBand,F.SequenceNumbers FROM DeptDet AS F
+
+--2. The Finance department wants to analyze cumulative  monthly sales throughout the year.
+-- Generate a report displaying: SalesYear, SalesMonth, MonthlySales, RunningTotalSales.
+-- Use a Common Table Expression (CTE) and a window function.
+;WITH MonthlySales AS
+(
+SELECT YEAR(A.OrderDate) AS SalesYear, MONTH(A.OrderDate) AS SalesMonth,SUM(B.Quantity*B.UnitPrice) AS MonthlySales FROM Orders AS A
+INNER JOIN OrderDetails AS B
+ON A.OrderID=B.OrderID
+GROUP BY YEAR(A.OrderDate),MONTH(A.OrderDate)
+)
+SELECT C.SalesYear,C.SalesMonth,C.MonthlySales,SUM(C.MonthlySales) 
+OVER ( PARTITION BY SalesYear ORDER BY SalesMonth ) AS RunningTotalSales
+FROM MonthlySales AS C
+ORDER BY C.SalesYear,C.SalesMonth;
+
+--3. The Sales department wants to compare monthly sales with the previous month.
+-- Generate a report displaying: SalesYear, SalesMonth, MonthlySales, PreviousMonthSales, SalesDifference.
+-- Use the LAG() window function.
+WITH MonthlySales AS
+(
+SELECT YEAR(A.OrderDate) AS SalesYear, MONTH(A.OrderDate) AS SalesMonth,
+SUM(B.Quantity*B.UnitPrice) AS MonthlySales FROM Orders AS A
+INNER JOIN OrderDetails AS B
+ON A.OrderID = B.OrderID
+GROUP BY YEAR(A.OrderDate),MONTH(A.OrderDate)
+)
+SELECT C.SalesYear,C.SalesMonth,C.MonthlySales,
+LAG(C.MonthlySales)
+    OVER
+    (
+      PARTITION BY C.SalesYear 
+      ORDER BY C.SalesMonth
+    ) AS PreviousMonthSales,
+MonthlySales-LAG(MonthlySales) OVER (PARTITION BY SalesYear ORDER BY SalesMonth) As SalesDifference
+FROM MonthlySales AS C
+
+--4. The Business Intelligence team wants to smooth monthly sales fluctuations by calculating a three-month monving average.
+-- Generate a report displaying: SalesYear, SalesMonth, MonthlySales, ThreeMonthMovingAverage. Use a window frame.
+;WITH MonthlySales AS
+(
+SELECT YEAR(A.OrderDate) AS SalesYear, MONTH(A.OrderDate) AS SalesMonth,
+SUM(B.Quantity*B.UnitPrice) AS MonthlySales
+FROM Orders AS A
+INNER JOIN OrderDetails AS B
+ON A.OrderID = B.OrderID
+GROUP BY YEAR(A.OrderDate),MONTH(A.OrderDate)
+)
+SELECT C.SalesYear,C.SalesMonth,C.MonthlySales,
+AVG(C.MonthlySales)
+   OVER
+     (
+        PARTITION BY C.SalesYear ORDER BY C.SalesMonth ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
+     ) AS ThreeMonthMovingAverage
+FROM MonthlySales AS C
+ORDER BY C.SalesYear,C.SalesMonth;
+
+--5. The Warehouse Manager wants to determine which products require immediate replenisment.
+-- Generate a report displaying: ProductID,ProductName,QuantityAvailable, ReorderLevel, ReorderQuantity, InventoryStatus.
+-- Business Rules:
+-- QuantityAvailable>ReorderLevel then Reorder Requrire
+-- Otherwise then Sufficient Stock.
+-- The reorder quantity should be calculated as: ReorderQuantity=ReorderLevel-QuantityAvailable.
+-- If the value is negative, return 0. Use multiple CTEs.
+WITH InventoryData AS
+(
+SELECT A.ProductID,A.ProductName,B.QuantityAvailable,B.ReorderLevel FROM Products AS A
+INNER JOIN Inventory AS B
+ON A.ProductID=B.ProductID
+),
+InventoryReport AS
+(
+SELECT C.ProductID,C.ProductName,C.QuantityAvailable,C.ReorderLevel,
+CASE
+     WHEN C.QuantityAvailable<C.ReorderLevel THEN C.ReorderLevel-C.QuantityAvailable
+     ELSE 0
+END AS ReorderQuantity
+FROM InventoryData AS C
+) 
+SELECT D.ProductID,D.ProductName,D.QuantityAvailable,D.ReorderLevel,D.ReorderQuantity,
+CASE
+    WHEN D.ReorderQuantity=0 THEN 'Sufficient Stock'
+    ELSE 'Reorder Required'
+END AS InventoryStatus
+FROM InventoryReport AS D
+ORDER BY D.ProductID;
