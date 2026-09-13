@@ -79,3 +79,34 @@ ON A.DepartmentID=DeptSummary.DepartmentID WHERE DeptSummary.EmployeeCount>(SELE
 --15. Display all products that have never been ordered by any customer using a Correlated Sub-query with the NOT EXISTS operator.
 SELECT * FROM Products AS A
 WHERE NOT EXISTS (SELECT 1 FROM OrderDetails AS B WHERE B.ProductID=A.ProductID);
+
+-- Intermediate Practice Questions
+--1. Display all employees who
+-- earn more than the company's average salary, and
+-- were hired before the average hiring data. Use only SQL Server (T-SQL) sub-queries.
+SELECT * FROM Employees AS A
+WHERE A.Salary>(SELECT AVG(B.Salary) FROM Employees AS B)
+AND A.HireDate<(SELECT AVG(C.HireDate) FROM Employees AS C);
+
+--2. Display all products whose price is greater than the average price of their own category using a Correlated Sub-query.
+SELECT * FROM Products AS A
+WHERE A.UnitPrice>(SELECT AVG(B.UnitPrice) FROM Products AS B WHERE A.ProductID=B.ProductID)
+
+--3.Display all customers whose total payment amount is greater the average total payment made by all customers.
+SELECT A.CustomerID,A.CustomerName,(SELECT SUM(F.PaymentAmount) FROM Orders AS D INNER JOIN Payments AS F ON 
+D.OrderID=F.OrderID WHERE D.CustomerID=A.CustomerID) AS TotalPayment FROM Customers AS A
+WHERE (SELECT SUM(C.PaymentAmount) FROM Orders AS B INNER JOIN Payments AS C ON B.CustomerID=A.CustomerID)>
+(SELECT AVG(CustomerTotal) FROM (SELECT SUM(H.PaymentAmount) AS CustomerTotal FROM Orders AS G INNER JOIN Payments H
+ON G.OrderID=H.OrderID GROUP BY G.CustomerID)AS AvgPayments); 
+
+--4. Display all departments whose total salary expenditure is greater than the average departmental salary expenditure.
+SELECT A.DepartmentID,A.DepartmentName,DeptSalary.TotalSalary FROM Departments AS A
+INNER JOIN (SELECT B.DepartmentID,SUM(B.Salary) AS TotalSalary FROM Employees AS B GROUP BY B.DepartmentID ) AS DeptSalary
+ON A.DepartmentID=DeptSalary.DepartmentID
+WHERE DeptSalary.TotalSalary>(SELECT AVG(TotalSalary) FROM (SELECT SUM(G.Salary) AS TotalSalary FROM Employees G GROUP BY G.DepartmentID)
+AS AvgDeptSalary);
+
+--5.Display all suppliers whose average product price is greater than the overall average product price of the company.
+SELECT A.SupplierID,A.SupplierName,A.City FROM Suppliers AS A
+WHERE (SELECT AVG(B.UnitPrice) FROM Products AS B WHERE B.SupplierID=A.SupplierID)>
+(SELECT AVG(C.UnitPrice) FROM Products AS C);
